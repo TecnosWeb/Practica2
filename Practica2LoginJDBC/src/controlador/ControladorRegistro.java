@@ -1,7 +1,7 @@
 package controlador;
 
-import java.io.File;
 import java.io.IOException;
+import java.sql.ResultSet;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -15,21 +15,20 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet("/ControladorRegistro")
 public class ControladorRegistro extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-    Gestionar g=new Gestionar();   
-    File f=g.crearDirectorio();
     /**
      * @see HttpServlet#HttpServlet()
      */
+	ConexionDB conex =new ConexionDB();
+	
     public ControladorRegistro() {
         super();
-        // TODO Auto-generated constructor stub
+        conex.crearConexion();
     }
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 	}
 
 	/**
@@ -41,24 +40,28 @@ public class ControladorRegistro extends HttpServlet {
 		String eMail = request.getParameter("txtEMail");
 		String nombre = request.getParameter("txtNombre");
 		String apellidos = request.getParameter("txtApellidos");
-		String mensaje = "---------------------<br>Error. Campo(s) nulo(s) o e-mail invalido<br>-----------------------";
-		if (!(user.isEmpty() || password.isEmpty() || eMail.isEmpty() || nombre.isEmpty()||
-				apellidos.isEmpty())) {
+		String mensaje="";
+		if (user.isEmpty() || password.equals(null) || eMail.equals(null) || nombre.equals(null)||apellidos.equals(null)) 
+			mensaje = "---------------------<br>Error. Campo(s) nulo(s) o e-mail invalido<br>-----------------------";
+		else{
 			try {
-				if(g.buscarUsuario(user, password))
+				String parametros[];
+				parametros =new String[2];
+				parametros[0]="usuario";
+				parametros[1]="password";
+				ResultSet r = conex.select("usuarios", parametros);
+				if(conex.buscarUsuario(r,user, password)==1)
 					mensaje= "Este usuario ya ha sido registrado, introduzca otro. ";
-				
-				else{
-					if(g.registrarUsuario(f,user, password, nombre, apellidos, eMail))
-						mensaje = "-------------------------------<br>Registro exitoso!<br>-----------------------------------";
+				if(conex.insertarUsuario(user, password, nombre, apellidos, eMail))
+					mensaje = "-------------------------------<br>Registro exitoso!<br>-----------------------------------";
 				}
-			} catch (Exception e) {
+			 catch (Exception e) {
 				System.out.println("Error al buscar usuario.");
 				e.printStackTrace();
 			}
-		}
+	}
 		mensaje += "<br><a href='login.html'>Regresar</a>";
-		g.respuesta(response, mensaje);
+		conex.respuesta(response, mensaje);
 	}
 
 }

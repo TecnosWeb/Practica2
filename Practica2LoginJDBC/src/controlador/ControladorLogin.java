@@ -1,6 +1,7 @@
 package controlador;
 
 import java.io.IOException;
+import java.sql.ResultSet;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -17,8 +18,12 @@ public class ControladorLogin extends HttpServlet {
     /**
      * @see HttpServlet#HttpServlet()
      */
+	ConexionDB c = new ConexionDB();
+	
     public ControladorLogin() {
         super();
+        c.crearConexion();
+    	
         // TODO Auto-generated constructor stub
     }
 
@@ -34,14 +39,29 @@ public class ControladorLogin extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		Gestionar g = new Gestionar();
-		String mensaje;
-		if(g.buscarUsuario(request.getParameter("txtUsuario"),request.getParameter("txtPassword"))) 
-			mensaje="Login correcto<br/><a href='bienvenido.html'>Continuar</a>";
-		else mensaje="Usuario o contraseña incorrectos. Usuario nuevo?\n<a href=registro.html>Registrarse</a>";
-		g.respuesta(response,mensaje);
-	
-	}
+		String mensaje=null;
+		String parametros[];
+		parametros =new String[2];
+		parametros[0]="usuario";
+		parametros[1]="password";
+		ResultSet r= c.select("usuarios", parametros);
+		int i=c.buscarUsuario(r,request.getParameter("txtUsuario"),request.getParameter("txtPassword"));
+		switch(i){
+			case 1: 
+				mensaje="Login correcto<br/><a href='bienvenido.html'>Continuar</a>";
+				break;
+			case -1:
+				mensaje="Usuario inválido. Usuario nuevo?\n<a href='registro.html'>Registrarse</a>";
+				break;
+			case 0:
+				mensaje="Contrasena incorrecta.<br/><a href='recuperar.html'>Olvidé mi contrasena</a>";
+				break;
+			default:
+				mensaje+="Error. Usuario o contraseña desconocidos<br><a href='login.html'>Regresar</a>";
+				break;
+		}
+			c.respuesta(response,mensaje);
+		}
 	
 
 }
